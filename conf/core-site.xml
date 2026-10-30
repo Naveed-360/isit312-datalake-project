@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!-- So Spark paths like /raw/visits resolve to HDFS -->
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://namenode:8020</value>
+  </property>
+</configuration>

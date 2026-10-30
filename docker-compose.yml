@@ -1,0 +1,107 @@
+# ISIT312 Alpha Group data lake: HDFS + Hive + Spark + Kafka on one machine.
+# Start:  docker compose up -d      Stop: docker compose down
+# Needs about 8 GB of RAM free for Docker.
+
+services:
+  # ---------- HDFS ----------
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    container_name: namenode
+    environment:
+      - CLUSTER_NAME=alpha
+    env_file: ./hadoop.env
+    ports:
+      - "50070:50070"   # HDFS web UI
+    volumes:
+      - namenode:/hadoop/dfs/name
+      - ./data:/data    # shared folder: put CSVs and images here
+      - ./jobs:/jobs
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    container_name: datanode
+    env_file: ./hadoop.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070"
+    volumes:
+      - datanode:/hadoop/dfs/data
+
+  # ---------- Hive ----------
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
+    container_name: hive-metastore-postgresql
+
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-metastore
+    env_file: ./hadoop.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432"
+
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-server
+    env_file: ./hadoop.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"   # beeline / JDBC
+    volumes:
+      - ./jobs:/jobs
+
+  # ---------- Spark ----------
+  spark-master:
+    image: bde2020/spark-master:3.3.0-hadoop3.3
+    container_name: spark-master
+    environment:
+      - INIT_DAEMON_STEP=setup_spark
+    ports:
+      - "8080:8080"     # Spark web UI
+      - "7077:7077"
+    volumes:
+      - ./jobs:/jobs
+      - ./data:/data
+      - ./conf/hive-site.xml:/spark/conf/hive-site.xml
+      - ./conf/core-site.xml:/spark/conf/core-site.xml
+
+  spark-worker:
+    image: bde2020/spark-worker:3.3.0-hadoop3.3
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2g
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./jobs:/jobs
+      - ./data:/data
+      - ./conf/hive-site.xml:/spark/conf/hive-site.xml
+      - ./conf/core-site.xml:/spark/conf/core-site.xml
+
+  # ---------- Kafka (single node, no ZooKeeper) ----------
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: kafka
+    ports:
+      - "29092:29092"   # use localhost:29092 from your laptop
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,HOST://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+volumes:
+  namenode:
+  datanode:
