@@ -133,6 +133,113 @@ appear as `/data` and `/jobs`.
 
 ---
 
+## Team conventions
+
+> **Proposed by M4 on Sun 1 Nov. We haven't had a call yet. If you disagree with anything,
+> say so in the group chat by Tue 3 Nov. Otherwise this is what we use.**
+> Everyone writes to these exact names, so the modules join up at the integration call.
+
+### HDFS folders
+
+| Folder | Owner | What goes there | Format |
+|---|---|---|---|
+| `/raw/patients/` | M1 | Patient data | CSV |
+| `/raw/visits/` | M1 | Visit data | CSV |
+| `/raw/billing/` | M1 | Billing data | CSV |
+| `/raw/medical_files/` | M3 | Dummy X-rays, MRIs and lab report PDFs | Image / PDF |
+| `/curated/patients/` | M4 | Cleaned patients | Parquet |
+| `/curated/visits_billing/` | M4 | Cleaned visits joined with patients and billing | Parquet |
+| `/curated/visits_live/` | M2 | Visits arriving live from Kafka | Parquet |
+| `/checkpoints/` | M2 | Spark Streaming progress (don't touch) | – |
+| `/results/` | M5 | MapReduce vs Spark timing output | Any |
+
+**Full dataset (from Wed 4 Nov):** M1 splits raw data into one folder per branch and day,
+for example `/raw/visits/branch_id=1/date=2026-11-01/visits.csv`.
+Spark reads the whole `/raw/visits/` folder either way, and turns `branch_id` and `date`
+into columns automatically.
+
+### Hive tables (database `alpha`)
+
+| Table | Owner | Built from |
+|---|---|---|
+| `alpha.patients` | M4 | `/curated/patients/` |
+| `alpha.visits_billing` | M4 | `/curated/visits_billing/` |
+| `alpha.visits_live` | M2 | `/curated/visits_live/` |
+| `alpha.medical_files` | M3 | `/raw/medical_files/`: one row per file, linking it to its patient |
+
+`alpha.medical_files` columns: `file_id, patient_id, branch_id, file_date, file_type, hdfs_path`.
+`file_type` is one of `xray`, `mri`, `lab_report`.
+
+### Kafka
+
+- **Topic:** `new-visits` (created automatically the first time anyone uses it)
+- **Message:** one JSON object per visit, using the visit column names below.
+  Example: `{"visit_id":"V01001","patient_id":"P00042","branch_id":2,"visit_datetime":"2026-11-01 10:42:00","doctor_id":"D003","diagnosis":"Asthma"}`
+- **Address:** `kafka:9092` from Spark jobs inside Docker; `localhost:29092` from a Python script on your laptop.
+- Messages are temporary. They're wiped when Docker restarts, so don't store anything only in Kafka.
+
+### Column names (from M1's files)
+
+| File | Columns |
+|---|---|
+| patients | `patient_id, first_name, last_name, dob, gender, branch_id, contact_number, email, address` |
+| visits | `visit_id, patient_id, branch_id, visit_datetime, doctor_id, diagnosis` |
+| billing | `bill_id, visit_id, patient_id, amount, payment_status, payment_date` |
+
+- IDs: `P00001`, `V00001`, `B00001`. Branches: `1`, `2`, `3`.
+- Dates: `yyyy-MM-dd`. Date and time: `yyyy-MM-dd HH:mm:ss`.
+- `visit_datetime` replaces `visit_date` in the full dataset (M1 is adding the time of each visit).
+
+---
+
+## Run a Spark job
+
+1. Put your Python file in the `jobs` folder. To start, copy [`jobs/example_job.py`](jobs/example_job.py).
+2. Run it from VS Code's terminal (Docker must be running):
+
+```bash
+docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7077 /jobs/example_job.py
+```
+
+Replace `example_job.py` with your file's name. The output appears in the terminal, and the job
+shows up at http://localhost:8080 while it runs.
+
+The example counts visits per branch. If M1's data is loaded, you'll see something like:
+
+```text
+Visits loaded: 1000
++---------+-----+
+|branch_id|count|
++---------+-----+
+|        1|  367|
+|        2|  326|
+|        3|  307|
++---------+-----+
+```
+
+**Tips**
+
+- Paths like `/raw/visits` point to HDFS. For files in your laptop's `data` folder, use `file:///data/...`.
+- To read or write Hive tables, build your session with `.enableHiveSupport()` (the example does this).
+- Spark prints a lot of `INFO` and `WARN` lines. That's normal. Your own `print` output is mixed in with them.
+
+**Jobs that read Kafka (M2):** add the Kafka package. The first run downloads about 60 MB, so it needs internet.
+
+```bash
+docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 /jobs/your_stream.py
+```
+
+**Python scripts on your laptop that send to Kafka** (e.g. M2's producer) need the library first:
+`pip install kafka-python`, then connect to `localhost:29092`.
+
+**Run a Hive SQL file:**
+
+```bash
+docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/your_file.sql
+```
+
+---
+
 ## Problems
 
 | What you see | What to do |
