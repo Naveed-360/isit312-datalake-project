@@ -174,7 +174,7 @@ into columns automatically.
 
 - **Topic:** `new-visits` (created automatically the first time anyone uses it)
 - **Message:** one JSON object per visit, using the visit column names below.
-  Example: `{"visit_id":"V01001","patient_id":"P00042","branch_id":2,"visit_datetime":"2026-11-01 10:42:00","doctor_id":"D003","diagnosis":"Asthma"}`
+  Example: `{"visit_id":"V01001","patient_id":"P00042","branch_id":2,"visit_date":"2026-11-01","doctor_id":"D003","diagnosis":"Asthma"}`
 - **Address:** `kafka:9092` from Spark jobs inside Docker; `localhost:29092` from a Python script on your laptop.
 - Messages are temporary. They're wiped when Docker restarts, so don't store anything only in Kafka.
 
@@ -183,12 +183,12 @@ into columns automatically.
 | File | Columns |
 |---|---|
 | patients | `patient_id, first_name, last_name, dob, gender, branch_id, contact_number, email, address` |
-| visits | `visit_id, patient_id, branch_id, visit_datetime, doctor_id, diagnosis` |
+| visits | `visit_id, patient_id, branch_id, visit_date, doctor_id, diagnosis` |
 | billing | `bill_id, visit_id, patient_id, amount, payment_status, payment_date` |
 
 - IDs: `P00001`, `V00001`, `B00001`. Branches: `1`, `2`, `3`.
 - Dates: `yyyy-MM-dd`. Date and time: `yyyy-MM-dd HH:mm:ss`.
-- `visit_datetime` replaces `visit_date` in the full dataset (M1 is adding the time of each visit).
+- We've asked M1 to add the time of each visit for the full dataset. This table will be updated once M1's new files are ready.
 
 ---
 
