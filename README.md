@@ -146,7 +146,7 @@ appear as `/data` and `/jobs`.
 | `/raw/patients/` | M1 | Patient data | CSV |
 | `/raw/visits/` | M1 | Visit data | CSV |
 | `/raw/billing/` | M1 | Billing data | CSV |
-| `/raw/medical_files/` | M3 | Dummy X-rays, MRIs and lab report PDFs | Image / PDF |
+| `/raw/files/` | M3 | Dummy X-rays, MRIs, lab reports and other PDFs, one folder per branch and date | Image / PDF |
 | `/curated/patients/` | M4 | Cleaned patients | Parquet |
 | `/curated/visits_billing/` | M4 | Cleaned visits joined with patients and billing | Parquet |
 | `/curated/visits_live/` | M2 | Visits arriving live from Kafka | Parquet |
@@ -165,10 +165,11 @@ into columns automatically.
 | `alpha.patients` | M4 | `/curated/patients/` |
 | `alpha.visits_billing` | M4 | `/curated/visits_billing/` |
 | `alpha.visits_live` | M2 | `/curated/visits_live/` |
-| `alpha.medical_files` | M3 | `/raw/medical_files/`: one row per file, linking it to its patient |
+| `alpha.medical_files` | M3 | `/raw/files/`: one row per file, linking it to its patient |
 
 `alpha.medical_files` columns: `file_id, patient_id, branch_id, file_date, file_type, hdfs_path`.
-`file_type` is one of `xray`, `mri`, `lab_report`.
+`file_type` is one of `xray`, `mri`, `lab_report`, `pdf`.
+Scans, lab reports and PDFs all go in this one table, so "all files for one patient" is a single query.
 
 ### Kafka
 
