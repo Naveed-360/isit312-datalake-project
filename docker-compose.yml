@@ -5,7 +5,8 @@
 services:
   # ---------- HDFS ----------
   namenode:
-    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    build: ./hadoop    # adds Python for MapReduce jobs, see hadoop/Dockerfile
+    image: isit312/namenode-python:1
     container_name: namenode
     environment:
       - CLUSTER_NAME=alpha

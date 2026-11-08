@@ -115,6 +115,7 @@ docker exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 -
 | Stop it (frees up memory, keeps your data) | `docker compose down` |
 | See what's running | `docker compose ps` |
 | Get the latest changes from the team | `git pull` |
+| After a `git pull` that changed `docker-compose.yml` or `hadoop/` | `docker compose up -d --build` |
 | Wipe everything and start fresh (**deletes all HDFS data**) | `docker compose down -v` |
 
 **Where to put your files:** the `data/` and `jobs/` folders in this project are shared
@@ -233,6 +234,24 @@ docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7
 **Python scripts on your laptop that send to Kafka** (e.g. M2's producer) need the library first:
 `pip install kafka-python`, then connect to `localhost:29092`.
 
+**Run a MapReduce job (M5):** Python MapReduce runs through Hadoop Streaming in the
+`namenode` container. Put your mapper and reducer in `jobs/m5/`, then:
+
+```bash
+docker exec namenode hadoop jar /opt/hadoop-2.7.4/share/hadoop/tools/lib/hadoop-streaming-2.7.4.jar -files /jobs/m5/branch_count_mapper.py,/jobs/m5/branch_count_reducer.py -mapper "python3 branch_count_mapper.py" -reducer "python3 branch_count_reducer.py" -input /raw/patients -output /results/branch_count
+```
+
+```bash
+docker exec namenode hdfs dfs -cat /results/branch_count/part-00000
+```
+
+- The Hadoop container has **Python 3.4**, so MapReduce scripts can't use f-strings.
+  Write `"%s\t%d\n" % (key, total)` instead of `f"{key}\t{total}\n"`.
+- Hadoop won't overwrite an output folder. Delete it before re-running:
+  `docker exec namenode hdfs dfs -rm -r /results/branch_count`
+- MapReduce runs in local mode (one process, no YARN cluster). This is fine for our timing test,
+  since Spark also runs on the same laptop.
+
 **Run a Hive SQL file:**
 
 ```bash
@@ -252,4 +271,6 @@ docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/your_fi
 | `no such file or directory` with a `C:/Program Files/Git/...` path | You're in Git Bash. Use PowerShell instead (see Step 1). |
 | `docker compose` is not recognised | Your Docker is old. Update Docker Desktop. |
 | Very slow on a Mac | Normal for M-chip Macs (see Step 2). Close other apps while it runs. |
+| MapReduce job fails with `subprocess failed with code 1` | Usually a Python error in your mapper or reducer, often an f-string (Python 3.4 doesn't support them). Test it with `docker exec namenode sh -c "head -5 /data/m1/patients.csv \| python3 /jobs/m5/your_mapper.py"`. |
+| `python3: not found` when running a MapReduce job | Your setup is from before 8 Nov. Run `git pull`, then `docker compose up -d --build`. |
 | Anything else | Send M4 (Naveed) a screenshot plus the output of `docker compose ps`. |
