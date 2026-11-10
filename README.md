@@ -258,6 +258,28 @@ docker exec namenode hdfs dfs -cat /results/branch_count/part-00000
 docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/your_file.sql
 ```
 
+**Create M4's curated tables (`alpha.patients`, `alpha.visits_billing`):** run M4's clean job first,
+then the table script. **Whenever the raw data changes, run both again, in this order.**
+If you skip the table script, Hive quietly leaves out any new branch and gives no error.
+
+```bash
+docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7077 /jobs/m4/clean_batch.py
+```
+
+```bash
+docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/m4/create_tables.sql
+```
+
+✅ It ends with a small table showing the row count of each table. Then try a query:
+
+```bash
+docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -e "SELECT branch_id, COUNT(*) AS visits, ROUND(SUM(amount),2) AS revenue FROM alpha.visits_billing GROUP BY branch_id;"
+```
+
+- In `alpha.visits_billing`, `branch_id` is the branch where the visit happened and
+  `home_branch_id` is the patient's home branch. It also has `visit_ts`, `visit_date` and `visit_hour`.
+- The tables only point at the `/curated` folders. Dropping one never deletes data.
+
 ---
 
 ## Problems
@@ -273,4 +295,5 @@ docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/your_fi
 | Very slow on a Mac | Normal for M-chip Macs (see Step 2). Close other apps while it runs. |
 | MapReduce job fails with `subprocess failed with code 1` | Usually a Python error in your mapper or reducer, often an f-string (Python 3.4 doesn't support them). Test it with `docker exec namenode sh -c "head -5 /data/m1/patients.csv \| python3 /jobs/m5/your_mapper.py"`. |
 | `python3: not found` when running a MapReduce job | Your setup is from before 8 Nov. Run `git pull`, then `docker compose up -d --build`. |
+| Hive query returns 0 rows, or `MSCK finds a file rather than a directory` | Run `/jobs/m4/create_tables.sql` again (see above). It rebuilds the table definitions. |
 | Anything else | Send M4 (Naveed) a screenshot plus the output of `docker compose ps`. |
