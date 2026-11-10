@@ -44,7 +44,7 @@ How data moves through the lake:
 
 | Member | Module | Code | Status (10 Nov) |
 |---|---|---|---|
-| **Afrith** | Batch ingestion: synthetic patients, visits, billing | (CSV files in the shared Google Drive) | ✅ Full dataset v1 (25k patients, 325k visits). v2 with 300k patients requested |
+| **Afrith** | Batch ingestion: synthetic patients, visits, billing | (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026) |
 | **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py` | ✅ Working end to end. Needs `visit_date` → `visit_datetime` in `streaming.py` |
 | **Fawaz** | Medical files: dummy scans, lab reports, PDFs | — | ⏳ Not on GitHub yet |
 | **Naveed** | Docker setup, processing, Hive tables, dashboard | `docker-compose.yml`, `jobs/m4/` | ✅ Setup, clean job, Hive tables. ⏳ Power BI dashboard |
