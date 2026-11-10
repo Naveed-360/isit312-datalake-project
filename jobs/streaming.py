@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, current_timestamp, unix_timestamp
-from pyspark.sql.types import DoubleType, StructType, StringType, TimestampType
+from pyspark.sql.types import DoubleType, IntegerType, StructType, StringType, TimestampType
 
 # Initialize Spark Session
 spark = SparkSession.builder \
@@ -12,8 +12,8 @@ spark = SparkSession.builder \
 schema = StructType() \
     .add("visit_id", StringType()) \
     .add("patient_id", StringType()) \
-    .add("branch_id", StringType()) \
-    .add("visit_date", StringType()) \
+    .add("branch_id", IntegerType()) \
+    .add("visit_datetime", StringType()) \
     .add("doctor_id", StringType()) \
     .add("diagnosis", StringType()) \
     .add("sent_timestamp", DoubleType())
@@ -31,7 +31,15 @@ clean_df = kafka_df.select(
     from_json(col("value").cast("string"), schema).alias("data"),
     col("timestamp").cast("double").alias("sent_timestamp")  # Docker-internal Kafka arrival time
 ) \
-.select("data.visit_id", "data.patient_id", "data.branch_id", "data.visit_date", "data.doctor_id", "data.diagnosis", "sent_timestamp") \
+.select(
+    "data.visit_id", 
+    "data.patient_id", 
+    "data.branch_id", 
+    "data.visit_datetime", 
+    "data.doctor_id", 
+    "data.diagnosis", 
+    "sent_timestamp"
+) \
 .withColumn("saved_timestamp", current_timestamp().cast("double"))
 
 # Write the live data to HDFS /curated/visits_live as Parquet files
