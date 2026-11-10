@@ -1,13 +1,14 @@
-"""M3: build the scans and reports data from metadata.csv.
+"""M3: build the scans, reports and medical_files data from metadata.csv.
 
 Reads  : /raw/files_metadata/metadata.csv   (uploaded by file_upload.py)
-Writes : /curated/scans    (X-ray and MRI images)
-         /curated/reports  (lab reports and medical documents)
-Both are Parquet, partitioned by branch_id, the same style as M4's tables.
+Writes : /curated/scans          X-ray and MRI images
+         /curated/reports        lab reports and medical documents
+         /curated/medical_files  ALL files in one table (the team convention)
+All are Parquet, partitioned by branch_id, the same style as M4's tables.
 Every row links one file (hdfs_path) to its patient (patient_id).
 
-Run (then run create_m3_tables.sql to register the Hive tables):
-  docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7077 /jobs/m3/build_scan_tables.py
+Run (then run m3_table_creation.sql to register the Hive tables):
+  docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7077 /jobs/m3/scan_table.py
 """
 import os
 
@@ -19,6 +20,7 @@ META = HDFS + "/raw/files_metadata/metadata.csv"
 RAW_FILES = HDFS + "/raw/files"
 OUT_SCANS = HDFS + "/curated/scans"
 OUT_REPORTS = HDFS + "/curated/reports"
+OUT_ALL = HDFS + "/curated/medical_files"
 
 SCAN_TYPES = ["X-ray", "MRI"]
 
@@ -55,9 +57,25 @@ files = (
 scans = files.filter(F.col("file_type").isin(SCAN_TYPES))
 reports = files.filter(~F.col("file_type").isin(SCAN_TYPES))
 
+# One table for everything, with the file_type values the team agreed on
+# (xray, mri, lab_report). Medical PDFs that are not lab reports become "document".
+medical_files = (
+    files
+    .withColumn(
+        "file_type",
+        F.when(F.col("file_type") == "X-ray", "xray")
+         .when(F.col("file_type") == "MRI", "mri")
+         .when(F.col("file_type") == "Lab Report", "lab_report")
+         .otherwise("document"),
+    )
+    .select("file_id", "patient_id", "file_date", "file_type", "hdfs_path", "branch_id")
+)
+
 scans.write.mode("overwrite").partitionBy("branch_id").parquet(OUT_SCANS)
 reports.write.mode("overwrite").partitionBy("branch_id").parquet(OUT_REPORTS)
+medical_files.write.mode("overwrite").partitionBy("branch_id").parquet(OUT_ALL)
 
-print("scans rows  :", scans.count())
-print("reports rows:", reports.count())
+print("scans rows        :", scans.count())
+print("reports rows      :", reports.count())
+print("medical_files rows:", medical_files.count())
 spark.stop()
