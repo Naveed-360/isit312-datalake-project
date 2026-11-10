@@ -1,13 +1,10 @@
 -- M3 demo: every scan, lab report and document for ONE patient, across all branches.
--- Change the patient id on both lines to try another patient.
+-- Change the patient id to try another patient.
 -- Run:
---   docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/m3/patient_files_demo.sql
+--   docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/m3/demo_patient_files.sql
 USE alpha;
 
-SELECT 'scan' AS kind, file_id, file_type, branch_id, file_date, hdfs_path
-FROM scans
+SELECT patient_id, file_type, branch_id, file_date, file_id, hdfs_path
+FROM medical_files
 WHERE patient_id = 'P00001'
-UNION ALL
-SELECT 'report' AS kind, file_id, file_type, branch_id, file_date, hdfs_path
-FROM reports
-WHERE patient_id = 'P00001';
+ORDER BY file_type;
