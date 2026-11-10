@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Upload M3's images, lab reports and PDFs to HDFS.
+
+Layout:  /raw/medical_files/branch=<branch_id>/date=<date>/<file>
+         /raw/files_metadata/metadata.csv
+
+Written without f-strings so it runs on the older Python inside the namenode container.
+"""
 import csv
 import os
 import subprocess
@@ -6,7 +14,7 @@ from collections import defaultdict
 
 ROOT = os.environ.get("M3_ROOT", "/data/m3")
 META = os.path.join(ROOT, "metadata.csv")
-HDFS_FILES = "/raw/files"
+HDFS_FILES = "/raw/medical_files"
 HDFS_META = "/raw/files_metadata"
 DRY = "--dry-run" in sys.argv
 
