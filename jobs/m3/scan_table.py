@@ -17,7 +17,7 @@ from pyspark.sql import functions as F
 
 HDFS = os.environ.get("M3_HDFS", "hdfs://namenode:8020")
 META = HDFS + "/raw/files_metadata/metadata.csv"
-RAW_FILES = HDFS + "/raw/files"
+RAW_FILES = HDFS + "/raw/medical_files"
 OUT_SCANS = HDFS + "/curated/scans"
 OUT_REPORTS = HDFS + "/curated/reports"
 OUT_ALL = HDFS + "/curated/medical_files"
