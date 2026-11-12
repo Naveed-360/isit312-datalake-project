@@ -1,0 +1,336 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Architecture (report)" id="d1">
+    <mxGraphModel dx="3837" dy="781" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2640" pageHeight="1260" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="c2" parent="1" style="text=;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=30;fontColor=#1a2b45;strokeColor=none;fillColor=none;" value="&lt;b&gt;Alpha Group Data Lake – Architecture (current system, v2)&lt;/b&gt;" vertex="1">
+          <mxGeometry height="45" width="1400" x="620" y="15.5" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" parent="1" style="text=;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#667;strokeColor=none;fillColor=none;" value="Everything inside the dashed boundary runs in Docker Compose on one laptop  ·  HDFS + Spark + Kafka + Hive  ·  ISIT312" vertex="1">
+          <mxGeometry height="24" width="1400" x="620" y="56" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#f6f9fc;strokeColor=#7a8ba3;strokeWidth=2.5;dashed=1;dashPattern=14 8;" value="" vertex="1">
+          <mxGeometry height="1130" width="1780" x="440" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="c5" parent="1" style="text=;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=16;fontColor=#4a5a73;strokeColor=none;fillColor=none;" value="&lt;b&gt;DOCKER COMPOSE  ·  namenode · datanode · hive-metastore (+PostgreSQL) · hive-server · spark-master · spark-worker · kafka&lt;/b&gt;" vertex="1">
+          <mxGeometry height="24" width="1400" x="630" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="c6" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#f4f9ff;strokeColor=#5b9bd5;strokeWidth=2.5;verticalAlign=top;fontColor=#5b9bd5;fontSize=19;fontStyle=1;" value="M1 – BATCH INGESTION (Afrith)" vertex="1">
+          <mxGeometry height="170" width="380" x="30" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c7" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#dbeaf7;strokeColor=#5b9bd5;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Synthetic Data Generator&lt;/b&gt;&lt;br&gt;patients.csv · visits.csv · billing.csv&lt;br&gt;300k / 325k / 325k rows&lt;br&gt;Aug 2025 – Oct 2026" vertex="1">
+          <mxGeometry height="110" width="340" x="50" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="c8" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#faf7fd;strokeColor=#8a63b5;strokeWidth=2.5;verticalAlign=top;fontColor=#8a63b5;fontSize=19;fontStyle=1;" value="M3 – MEDICAL FILES (Fawaz)" vertex="1">
+          <mxGeometry height="170" width="380" x="30" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="c9" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#e6dff0;strokeColor=#8a63b5;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Dummy File Generator&lt;/b&gt;&lt;br&gt;X-rays, MRIs, lab reports, documents&lt;br&gt;+ metadata.csv (patient, branch,&lt;br&gt;date, file_type)" vertex="1">
+          <mxGeometry height="110" width="340" x="50" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="c10" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#f3fbf8;strokeColor=#3fa07f;strokeWidth=2.5;verticalAlign=top;fontColor=#3fa07f;fontSize=19;fontStyle=1;" value="M2 – STREAMING INGESTION (Wafeeq)" vertex="1">
+          <mxGeometry height="170" width="380" x="30" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="c11" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#d7efe6;strokeColor=#3fa07f;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Python Visit Producer&lt;/b&gt;&lt;br&gt;producer.py generates NEW visits&lt;br&gt;5 visits / second as JSON&lt;br&gt;+ sent_timestamp" vertex="1">
+          <mxGeometry height="110" width="340" x="50" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="c12" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#f7f7f7;strokeColor=#777;strokeWidth=2.5;verticalAlign=top;fontColor=#777;fontSize=19;fontStyle=1;dashed=1;dashPattern=10 7;" value="EXISTING BRANCH CLINICS (future)" vertex="1">
+          <mxGeometry height="300" width="380" x="30" y="900" as="geometry" />
+        </mxCell>
+        <mxCell id="c13" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#888;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;dashed=1;dashPattern=8 6;" value="&lt;b&gt;Branch A / B / C&lt;/b&gt;&lt;br&gt;Custom software, SQL Server" vertex="1">
+          <mxGeometry height="70" width="340" x="50" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="c14" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#eeeeee;strokeColor=#888;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;dashed=1;dashPattern=8 6;" value="&lt;b&gt;Local medical files&lt;/b&gt;&lt;br&gt;X-rays, MRIs, reports" vertex="1">
+          <mxGeometry height="70" width="340" x="50" y="1030" as="geometry" />
+        </mxCell>
+        <mxCell id="c15" parent="1" style="text=;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#777;strokeColor=none;fillColor=none;" value="Not connected yet: planned&lt;br&gt;CDC feed and secure file sync" vertex="1">
+          <mxGeometry height="42" width="1400" x="-480" y="1129" as="geometry" />
+        </mxCell>
+        <mxCell id="c16" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#dbeaf7;strokeColor=#5b9bd5;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Load raw CSVs to HDFS&lt;/b&gt;&lt;br&gt;hdfs dfs -put&lt;br&gt;(load_raw_to_hdfs.sh)" vertex="1">
+          <mxGeometry height="110" width="270" x="470" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="c17" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#e6dff0;strokeColor=#8a63b5;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;file_upload.py&lt;/b&gt;&lt;br&gt;(in namenode)&lt;br&gt;branch=&amp;lt;id&amp;gt;/date=&amp;lt;date&amp;gt;/" vertex="1">
+          <mxGeometry height="110" width="270" x="470" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="c18" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#d7efe6;strokeColor=#3fa07f;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Apache Kafka&lt;/b&gt;&lt;br&gt;topic: new-visits&lt;br&gt;kafka:9092 · localhost:29092" vertex="1">
+          <mxGeometry height="110" width="270" x="470" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="c19" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#eef3fb;strokeColor=#4472c4;strokeWidth=2.5;verticalAlign=top;fontColor=#4472c4;fontSize=19;fontStyle=1;" value="HDFS – RAW ZONE" vertex="1">
+          <mxGeometry height="430" width="300" x="790" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c20" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#dde8f7;strokeColor=#4472c4;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;CSV (Afrith)&lt;/b&gt;&lt;br&gt;/raw/patients&lt;br&gt;/raw/visits&lt;br&gt;/raw/billing" vertex="1">
+          <mxGeometry height="150" width="260" x="810" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="c21" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#dde8f7;strokeColor=#4472c4;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Files (Fawaz)&lt;/b&gt;&lt;br&gt;/raw/medical_files&lt;br&gt;image / PDF, by branch &amp;amp; date&lt;br&gt;/raw/files_metadata&lt;br&gt;metadata.csv" vertex="1">
+          <mxGeometry height="200" width="260" x="810" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="c22" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#f3faf1;strokeColor=#70ad47;strokeWidth=2.5;verticalAlign=top;fontColor=#70ad47;fontSize=19;fontStyle=1;" value="SPARK CLUSTER" vertex="1">
+          <mxGeometry height="670" width="330" x="1140" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c23" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#e2f0d9;strokeColor=#70ad47;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;M4 · clean_batch.py&lt;/b&gt;&lt;br&gt;Trim, parse dates, drop duplicates,&lt;br&gt;join visits + patients + billing&lt;br&gt;(Naveed)" vertex="1">
+          <mxGeometry height="150" width="290" x="1160" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="c24" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#e6dff0;strokeColor=#8a63b5;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;M3 · scan_table.py&lt;/b&gt;&lt;br&gt;metadata → medical_files,&lt;br&gt;scans, reports (Fawaz)" vertex="1">
+          <mxGeometry height="130" width="290" x="1160" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="c25" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#d7efe6;strokeColor=#3fa07f;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;M2 · streaming.py&lt;/b&gt;&lt;br&gt;Structured Streaming: parse JSON,&lt;br&gt;add saved_timestamp" vertex="1">
+          <mxGeometry height="100" width="290" x="1160" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="c26" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#eef3fb;strokeColor=#4472c4;strokeWidth=2.5;verticalAlign=top;fontColor=#4472c4;fontSize=19;fontStyle=1;" value="HDFS – CURATED ZONE" vertex="1">
+          <mxGeometry height="670" width="300" x="1520" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c27" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#dde8f7;strokeColor=#4472c4;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Cleaned batch (Naveed)&lt;/b&gt;&lt;br&gt;/curated/patients&lt;br&gt;/curated/visits_billing&lt;br&gt;partitioned by branch" vertex="1">
+          <mxGeometry height="150" width="260" x="1540" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="c28" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#dde8f7;strokeColor=#4472c4;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Medical files (Fawaz)&lt;/b&gt;&lt;br&gt;/curated/medical_files&lt;br&gt;/curated/scans&lt;br&gt;/curated/reports" vertex="1">
+          <mxGeometry height="130" width="260" x="1540" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="c29" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#dde8f7;strokeColor=#4472c4;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Live visits (Wafeeq)&lt;/b&gt;&lt;br&gt;/curated/visits_live&lt;br&gt;/checkpoints/visits_live" vertex="1">
+          <mxGeometry height="100" width="260" x="1540" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="c30" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#fff9ee;strokeColor=#d9972b;strokeWidth=2.5;verticalAlign=top;fontColor=#d9972b;fontSize=19;fontStyle=1;" value="HIVE (SQL layer)" vertex="1">
+          <mxGeometry height="670" width="330" x="1870" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c31" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fbe9c7;strokeColor=#d9972b;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;HiveServer2  :10000&lt;/b&gt;&lt;br&gt;Hive Metastore on PostgreSQL" vertex="1">
+          <mxGeometry height="100" width="290" x="1890" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="c32" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fbe9c7;strokeColor=#d9972b;strokeWidth=2;fontSize=16;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Database alpha&lt;/b&gt;&lt;br&gt;(external tables on Parquet)&lt;br&gt;alpha.patients&lt;br&gt;alpha.visits_billing&lt;br&gt;alpha.visits_live&lt;br&gt;alpha.medical_files&lt;br&gt;alpha.scans&lt;br&gt;alpha.reports&lt;br&gt;&lt;br&gt;Tables only point at HDFS:&lt;br&gt;dropping one never deletes data" vertex="1">
+          <mxGeometry height="390" width="290" x="1890" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="c33" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fdf3de;strokeColor=#d9972b;strokeWidth=2;fontSize=13;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Created by: m4/create_tables.sql&lt;/b&gt;&lt;br&gt;m3/m3_table_creation.sql&lt;br&gt;create_visits_live_table.sql" vertex="1">
+          <mxGeometry height="85" width="290" x="1890" y="715" as="geometry" />
+        </mxCell>
+        <mxCell id="c34" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#f6fbef;strokeColor=#70ad47;strokeWidth=2.5;verticalAlign=top;fontColor=#70ad47;fontSize=19;fontStyle=1;" value="CONSUMERS" vertex="1">
+          <mxGeometry height="430" width="360" x="2250" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="c35" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#e2f0d9;strokeColor=#70ad47;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Power BI Desktop (Naveed)&lt;/b&gt;&lt;br&gt;ODBC → localhost:10000&lt;br&gt;Clinic management dashboard:&lt;br&gt;patients / branch, daily revenue,&lt;br&gt;repeat visits, busiest hours&lt;br&gt;(in progress)" vertex="1">
+          <mxGeometry height="170" width="320" x="2270" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="c36" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#e2f0d9;strokeColor=#70ad47;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Hive SQL via beeline&lt;/b&gt;&lt;br&gt;Demo: every file for one patient&lt;br&gt;across all branches&lt;br&gt;(m3/demo_patient_files.sql)&lt;br&gt;Visits and revenue per branch" vertex="1">
+          <mxGeometry height="170" width="320" x="2270" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="c37" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#d7efe6;strokeColor=#3fa07f;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;measure_delay.py (Wafeeq)&lt;/b&gt;&lt;br&gt;Spark batch job on visits_live&lt;br&gt;Average delay: Kafka arrival →&lt;br&gt;saved in HDFS" vertex="1">
+          <mxGeometry height="150" width="320" x="2270" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="c38" parent="1" style="rounded=1;arcSize=2;whiteSpace=wrap;html=1;fillColor=#fff6ef;strokeColor=#ed7d31;strokeWidth=2.5;verticalAlign=top;fontColor=#ed7d31;fontSize=19;fontStyle=1;" value="M5 – MAPREDUCE vs SPARK TEST (Shahir)" vertex="1">
+          <mxGeometry height="310" width="1410" x="790" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="c39" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fde3d1;strokeColor=#ed7d31;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;prepare_benchmark_data.py&lt;/b&gt;&lt;br&gt;Reads local data/m1/patients.csv&lt;br&gt;(not from HDFS) → makes&lt;br&gt;10k, 100k and 300k row files" vertex="1">
+          <mxGeometry height="130" width="280" x="815" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="c40" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fde3d1;strokeColor=#ed7d31;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Hadoop Streaming MapReduce&lt;/b&gt;&lt;br&gt;mapper → shuffle/sort → reducer&lt;br&gt;patients per branch" vertex="1">
+          <mxGeometry height="110" width="300" x="1145" y="925" as="geometry" />
+        </mxCell>
+        <mxCell id="c41" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fde3d1;strokeColor=#ed7d31;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;Apache Spark batch&lt;/b&gt;&lt;br&gt;branch_count_spark.py&lt;br&gt;groupBy(branch_id).count()" vertex="1">
+          <mxGeometry height="100" width="300" x="1145" y="1055" as="geometry" />
+        </mxCell>
+        <mxCell id="c42" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fde3d1;strokeColor=#ed7d31;strokeWidth=2;fontSize=15;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;HDFS /results&lt;/b&gt;&lt;br&gt;/results/benchmark/...&lt;br&gt; (MapReduce and Spark output)" vertex="1">
+          <mxGeometry height="110" width="300" x="1500" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="c43" parent="1" style="rounded=1;arcSize=12;whiteSpace=wrap;html=1;fillColor=#fde3d1;strokeColor=#ed7d31;strokeWidth=2;fontSize=14;fontColor=#222;align=center;verticalAlign=middle;" value="&lt;b&gt;run_hadoop_spark_benchmark.ps1&lt;/b&gt;&lt;br&gt;3 runs per size, median time&lt;br&gt;Counts must match →&lt;br&gt;results/mapreduce_vs_spark.csv&lt;div&gt;runs + times both jobs&lt;/div&gt;" vertex="1">
+          <mxGeometry height="130" width="320" x="1860" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="c44" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="245" as="sourcePoint" />
+            <mxPoint x="470" y="245" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c45" parent="1" style="rounded=1;arcSize=50;html=1;whiteSpace=nowrap;fillColor=#eef5fd;strokeColor=#bcd5ee;fontColor=#1f5fa8;fontSize=13;" value="CSV" vertex="1">
+          <mxGeometry height="28" width="47.4" x="406.3" y="201" as="geometry" />
+        </mxCell>
+        <mxCell id="c46" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="740" y="245" as="sourcePoint" />
+            <mxPoint x="810" y="245" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c47" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="495" as="sourcePoint" />
+            <mxPoint x="470" y="495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c48" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="740" y="495" as="sourcePoint" />
+            <mxPoint x="810" y="495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c49" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="390" y="745" as="sourcePoint" />
+            <mxPoint x="470" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c50" parent="1" style="rounded=1;arcSize=50;html=1;whiteSpace=nowrap;fillColor=#eef5fd;strokeColor=#bcd5ee;fontColor=#1f5fa8;fontSize=13;" value="visits" vertex="1">
+          <mxGeometry height="28" width="70.8" x="394.6" y="702" as="geometry" />
+        </mxCell>
+        <mxCell id="c51" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1070" y="265" as="sourcePoint" />
+            <mxPoint x="1160" y="265" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c52" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1070" y="460" as="sourcePoint" />
+            <mxPoint x="1160" y="500" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c53" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="740" y="745" as="sourcePoint" />
+            <mxPoint x="1160" y="745" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c54" parent="1" style="rounded=1;arcSize=50;html=1;whiteSpace=nowrap;fillColor=#eef5fd;strokeColor=#bcd5ee;fontColor=#1f5fa8;fontSize=14;" value="Consume stream" vertex="1">
+          <mxGeometry height="28" width="141.6" x="984.2" y="702" as="geometry" />
+        </mxCell>
+        <mxCell id="c55" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1450" y="265" as="sourcePoint" />
+            <mxPoint x="1540" y="265" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c56" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1450" y="505" as="sourcePoint" />
+            <mxPoint x="1540" y="505" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c57" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1450" y="740" as="sourcePoint" />
+            <mxPoint x="1540" y="740" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c58" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1800" y="265" as="sourcePoint" />
+            <mxPoint x="1890" y="265" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c59" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1800" y="505" as="sourcePoint" />
+            <mxPoint x="1890" y="505" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c60" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1845" y="740" />
+              <mxPoint x="1845" y="680" />
+            </Array>
+            <mxPoint x="1800" y="740" as="sourcePoint" />
+            <mxPoint x="1890" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c61" parent="1" style="rounded=1;arcSize=50;html=1;whiteSpace=nowrap;fillColor=#eef5fd;strokeColor=#bcd5ee;fontColor=#1f5fa8;fontSize=12;" value="external" vertex="1">
+          <mxGeometry height="28" width="81.6" x="1804.2" y="221" as="geometry" />
+        </mxCell>
+        <mxCell id="c62" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2180" y="260" as="sourcePoint" />
+            <mxPoint x="2270" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c63" parent="1" style="rounded=1;arcSize=50;html=1;whiteSpace=nowrap;fillColor=#eef5fd;strokeColor=#bcd5ee;fontColor=#1f5fa8;fontSize=13;" value="SQL" vertex="1">
+          <mxGeometry height="28" width="47.4" x="2201.3" y="216" as="geometry" />
+        </mxCell>
+        <mxCell id="c64" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2180" y="470" as="sourcePoint" />
+            <mxPoint x="2270" y="470" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c65" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1095" y="990" as="sourcePoint" />
+            <mxPoint x="1145" y="980" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c66" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1120" y="1105" />
+            </Array>
+            <mxPoint x="1095" y="1010" as="sourcePoint" />
+            <mxPoint x="1145" y="1105" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c67" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1445" y="975" as="sourcePoint" />
+            <mxPoint x="1500" y="975" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c68" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1480" y="1105" />
+              <mxPoint x="1480" y="1010" />
+            </Array>
+            <mxPoint x="1445" y="1105" as="sourcePoint" />
+            <mxPoint x="1500" y="1010" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c69" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1800" y="985" as="sourcePoint" />
+            <mxPoint x="1860" y="985" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c70" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;dashed=1;dashPattern=7 6;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="630" y="975" />
+            </Array>
+            <mxPoint x="390" y="975" as="sourcePoint" />
+            <mxPoint x="630" y="800" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c71" parent="1" style="rounded=1;arcSize=50;html=1;whiteSpace=nowrap;fillColor=#eef5fd;strokeColor=#bcd5ee;fontColor=#1f5fa8;fontSize=13;" value="Future CDC" vertex="1">
+          <mxGeometry height="28" width="102" x="579" y="866" as="geometry" />
+        </mxCell>
+        <mxCell id="c72" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;dashed=1;dashPattern=7 6;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="1065" />
+            </Array>
+            <mxPoint x="390" y="1065" as="sourcePoint" />
+            <mxPoint x="520" y="550" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c73" parent="1" style="rounded=1;arcSize=50;html=1;whiteSpace=nowrap;fillColor=#eef5fd;strokeColor=#bcd5ee;fontColor=#1f5fa8;fontSize=13;" value="Future secure file sync" vertex="1">
+          <mxGeometry height="28" width="203.4" x="418.3" y="986" as="geometry" />
+        </mxCell>
+        <mxCell id="c74" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2260" y="900" as="sourcePoint" />
+            <mxPoint x="2330" y="900" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c75" parent="1" style="text=;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontColor=#333;strokeColor=none;fillColor=none;" value="Working data flow" vertex="1">
+          <mxGeometry height="22.5" width="1400" x="2345" y="888.75" as="geometry" />
+        </mxCell>
+        <mxCell id="c76" edge="1" parent="1" style="endArrow=block;endFill=1;html=1;rounded=0;edgeStyle=none;strokeColor=#666666;strokeWidth=2.2;fontSize=14;fontColor=#1f5fa8;labelBackgroundColor=#fcfcfd;dashed=1;dashPattern=7 6;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="2260" y="935" as="sourcePoint" />
+            <mxPoint x="2330" y="935" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="c77" parent="1" style="text=;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=15;fontColor=#333;strokeColor=none;fillColor=none;" value="Planned / future" vertex="1">
+          <mxGeometry height="22.5" width="1400" x="2345" y="923.75" as="geometry" />
+        </mxCell>
+        <mxCell id="c78" parent="1" style="text=;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#555;strokeColor=none;fillColor=none;" value="Status: Power BI dashboard in progress." vertex="1">
+          <mxGeometry height="21" width="1400" x="2260" y="974.5" as="geometry" />
+        </mxCell>
+        <mxCell id="c79" parent="1" style="text=;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;fontSize=14;fontColor=#555;strokeColor=none;fillColor=none;" value="Medical files linked to final 6-digit patient IDs." vertex="1">
+          <mxGeometry height="21" width="1400" x="2260" y="999.5" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
