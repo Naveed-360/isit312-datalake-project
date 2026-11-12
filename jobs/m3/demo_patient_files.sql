@@ -6,5 +6,5 @@ USE alpha;
 
 SELECT patient_id, file_type, branch_id, file_date, file_id, hdfs_path
 FROM medical_files
-WHERE patient_id = 'P00001'
+WHERE patient_id = 'P000005'
 ORDER BY file_type;
