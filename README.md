@@ -81,7 +81,9 @@ isit312-datalake-project/
 │   └── m5/
 │       ├── branch_count_mapper.py   ← Shahir: MapReduce mapper (Hadoop Streaming)
 │       ├── branch_count_reducer.py  ← Shahir: MapReduce reducer
-│       └── branch_count_spark.py    ← Shahir: the same count in Spark
+│       ├── branch_count_spark.py    ← Shahir: the same count in Spark
+│       ├── prepare_benchmark_data.py      ← Shahir: makes 10k / 100k / 300k patient files
+│       └── run_hadoop_spark_benchmark.ps1 ← Shahir: times MapReduce vs Spark on each size
 ├── results/
 │   └── Architecture Diagram.png     ← Shahir: architecture diagram
 └── data/                     ← your local data files; appears as /data (not on GitHub)
@@ -185,6 +187,21 @@ docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7
 See the results with `docker exec namenode hdfs dfs -cat /results/branch_count/part-00000`.
 Hadoop won't overwrite an output folder: delete it first with
 `docker exec namenode hdfs dfs -rm -r /results/branch_count`.
+
+**Timing test on 10k / 100k / 300k patients.** Needs Afrith's `patients.csv` in `data/m1/` and
+Python on your laptop. From the project folder in PowerShell:
+
+```bash
+python jobs/m5/prepare_benchmark_data.py --no-expansion
+```
+
+```bash
+powershell -ExecutionPolicy Bypass -File jobs/m5/run_hadoop_spark_benchmark.ps1
+```
+
+✅ It runs both jobs 3 times on each size (about 3 minutes), checks they give the same counts, and
+writes the median times to `results/mapreduce_vs_spark.csv`. Add `-SparkMaster 'local[*]'` to run
+Spark in one process instead of on the Spark cluster.
 
 ### 6. Dashboard (Naveed)
 
