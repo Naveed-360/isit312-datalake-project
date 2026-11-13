@@ -47,11 +47,11 @@ How data moves through the lake:
 
 | Member | Module | Code | Status (13 Nov) |
 |---|---|---|---|
-| **Afrith** | Batch ingestion: synthetic patients, visits, billing | `jobs/load_raw_to_hdfs.sh`, `jobs/data_check.py` (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026). ⏳ Load and data check scripts being fixed. Use step 1 below to load for now |
+| **Afrith** | Batch ingestion: synthetic patients, visits, billing | `jobs/load_raw_to_hdfs.sh`, `jobs/data_check.py` (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026). ✅ Data check passes on all 3 files. ✅ Load script works for the split layout. ⏳ `prepare_raw_partitions.py` (makes `data/raw/`) not on GitHub yet |
 | **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py`, `jobs/create_visits_live_table.sql` | ✅ Done: new visits in Saudi time, unique visit IDs across runs, Hive table, delay 0.50 s over 100 visits |
 | **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Done: 350 files for 200 patients, linked to the final 6-digit patient IDs; upload, Spark job, Hive tables, demo |
 | **Naveed** | Docker setup, processing, Hive tables, dashboard | `docker-compose.yml`, `jobs/m4/` | ✅ Setup, clean job, Hive tables. ⏳ Power BI dashboard |
-| **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Final diagrams (detailed + simplified), both jobs, benchmark script. ⏳ Timing results |
+| **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Done: final diagrams (detailed + simplified), both jobs, timing test on 10k / 100k / 300k (all PASS, `results/mapreduce_vs_spark.csv`) |
 
 ---
 
@@ -70,8 +70,8 @@ isit312-datalake-project/
 │   └── hive-site.xml         ← tells Spark where the Hive tables are
 ├── jobs/                     ← all code; appears as /jobs inside the containers
 │   ├── example_job.py        ← starter Spark job: visits per branch
-│   ├── load_raw_to_hdfs.sh   ← Afrith: loads data/raw/ into HDFS /raw (being fixed)
-│   ├── data_check.py         ← Afrith: row counts, empty fields, duplicate IDs (being fixed)
+│   ├── load_raw_to_hdfs.sh   ← Afrith: loads data/raw/ (visits + billing split by branch and day) into HDFS /raw
+│   ├── data_check.py         ← Afrith: row counts, empty fields, duplicate IDs
 │   ├── producer.py           ← Wafeeq: sends 100 new live visits to Kafka
 │   ├── streaming.py          ← Wafeeq: Kafka → /curated/visits_live (Spark Streaming)
 │   ├── create_visits_live_table.sql ← Wafeeq: Hive table alpha.visits_live
@@ -95,7 +95,8 @@ isit312-datalake-project/
 │   ├── Updated Architecture Diagram Simplified.png     ← Shahir: diagram for slides (shown above)
 │   ├── Updated Architecture Diagram Simplified.drawio  ← Shahir: editable version (draw.io)
 │   ├── Updated Architecture Diagram Detailed.png       ← Shahir: full diagram for the report
-│   └── Updated Architecture Diagram Detailed.drawio    ← Shahir: editable version (draw.io)
+│   ├── Updated Architecture Diagram Detailed.drawio    ← Shahir: editable version (draw.io)
+│   └── mapreduce_vs_spark.csv                          ← Shahir: timing results (median of 3 runs per size)
 └── data/                     ← your local data files; appears as /data (not on GitHub)
 ```
 
@@ -116,6 +117,27 @@ docker exec namenode bash -c 'for n in patients visits billing; do hdfs dfs -mkd
 ```
 
 ✅ Check: `docker exec namenode hdfs dfs -ls /raw` lists `billing`, `patients` and `visits`.
+
+**Check the data (Afrith's data check).** Needs `pip install pandas` once. From the project folder:
+
+```bash
+python jobs/data_check.py --input data/m1
+```
+
+✅ All 3 tables end with `RESULT: PASS` (row counts, empty fields, duplicate IDs). Empty
+`payment_date` on Unpaid bills is expected. The report is saved in `data/`.
+
+**Alternative: Afrith's split layout** (visits and billing in one folder per branch and day, as a
+real clinic would deliver them). Once `data/raw/` exists, run from **Git Bash**:
+
+```bash
+bash jobs/load_raw_to_hdfs.sh --fresh
+```
+
+- `--fresh` deletes `/raw` first. Use it whenever you switch layouts, otherwise old files stay next
+  to the new folders and visits appear twice.
+- It loads about 2,700 small files, which takes **about 15 minutes**. HDFS is slow with many small
+  files (the "small files problem"). All jobs read either layout.
 
 ### 2. Clean the data and create the Hive tables (Naveed)
 

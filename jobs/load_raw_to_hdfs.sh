@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # M1 · Load script — put staged raw CSVs into HDFS on the Alpha Group Docker setup.
 #
-# Prerequisites (from TEAM README):
+# Prerequisites:
 #   1. Docker Desktop running
 #   2. From the isit312-datalake-project root:  docker compose up -d
-#   3. Local partitions ready under data/raw/...  (run jobs/prepare_raw_partitions.py)
+#   3. Local data ready under data/raw/...  (run: python3 jobs/prepare_raw_partitions.py)
 #
-# HDFS layout (team convention):
-#   /raw/patients/branch_id=<id>/date=<yyyy-MM-dd>/patients.csv
+# HDFS layout:
+#   /raw/patients/patients.csv                          (ONE file — MapReduce needs this)
 #   /raw/visits/branch_id=<id>/date=<yyyy-MM-dd>/visits.csv
 #   /raw/billing/branch_id=<id>/date=<yyyy-MM-dd>/billing.csv
 #
@@ -17,6 +17,9 @@
 #   bash jobs/load_raw_to_hdfs.sh --dry-run   # print commands only
 
 set -euo pipefail
+
+# Git Bash on Windows rewrites /raw -> C:/Program Files/Git/raw without this.
+export MSYS_NO_PATHCONV=1
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RAW_LOCAL="${ROOT}/data/raw"
@@ -30,7 +33,7 @@ for arg in "$@"; do
     --fresh) FRESH=1 ;;
     --dry-run) DRY=1 ;;
     -h|--help)
-      sed -n '2,20p' "$0"
+      sed -n '2,22p' "$0"
       exit 0
       ;;
     *)
@@ -40,11 +43,11 @@ for arg in "$@"; do
   esac
 done
 
-hdfs() {
+run() {
   if [[ "$DRY" -eq 1 ]]; then
-    echo "DRY: docker exec ${NAMENODE_CONTAINER} hdfs dfs $*"
+    echo "DRY: $*"
   else
-    docker exec "${NAMENODE_CONTAINER}" hdfs dfs "$@"
+    eval "$@"
   fi
 }
 
@@ -58,7 +61,10 @@ if [[ ! -d "${RAW_LOCAL}" ]]; then
   exit 1
 fi
 
-# Quick Docker sanity check (skip in dry-run if docker missing)
+if [[ ! -f "${RAW_LOCAL}/patients/patients.csv" ]]; then
+  echo "WARNING: ${RAW_LOCAL}/patients/patients.csv missing (Shahir needs a single patients file)." >&2
+fi
+
 if [[ "$DRY" -eq 0 ]]; then
   if ! docker ps --format '{{.Names}}' | grep -qx "${NAMENODE_CONTAINER}"; then
     echo "ERROR: container '${NAMENODE_CONTAINER}' is not running." >&2
@@ -70,34 +76,23 @@ fi
 
 if [[ "$FRESH" -eq 1 ]]; then
   echo "Removing existing ${HDFS_RAW_ROOT} ..."
-  hdfs -rm -r -f "${HDFS_RAW_ROOT}" || true
+  run "docker exec ${NAMENODE_CONTAINER} hdfs dfs -rm -r -f ${HDFS_RAW_ROOT}"
 fi
 
-hdfs -mkdir -p "${HDFS_RAW_ROOT}/patients" "${HDFS_RAW_ROOT}/visits" "${HDFS_RAW_ROOT}/billing"
+run "docker exec ${NAMENODE_CONTAINER} hdfs dfs -mkdir -p ${HDFS_RAW_ROOT}"
 
-# Copy each local partition file into the matching HDFS path.
-# Local path:  data/raw/visits/branch_id=1/date=2025-08-08/visits.csv
-# Inside container the same tree is mounted at /data/raw/...
-count=0
-while IFS= read -r -d '' file; do
-  rel="${file#${RAW_LOCAL}/}"          # visits/branch_id=1/date=.../visits.csv
-  hdfs_dir="${HDFS_RAW_ROOT}/$(dirname "${rel}")"
-  hdfs_path="${HDFS_RAW_ROOT}/${rel}"
-  local_in_container="/data/raw/${rel}"
-
-  hdfs -mkdir -p "${hdfs_dir}"
-  # -f overwrites if re-run
-  hdfs -put -f "${local_in_container}" "${hdfs_path}"
-  echo "  PUT ${rel}"
-  count=$((count + 1))
-done < <(find "${RAW_LOCAL}" -type f -name '*.csv' -print0 | sort -z)
+# One put for the whole tree (much faster than per-file docker exec).
+# Inside the container, ./data is mounted at /data. The * must be expanded by a shell
+# INSIDE the container (hdfs itself doesn't expand it), hence bash -c '...'.
+echo "Bulk loading /data/raw/* -> ${HDFS_RAW_ROOT}/ ..."
+run "docker exec ${NAMENODE_CONTAINER} bash -c 'hdfs dfs -put -f /data/raw/* ${HDFS_RAW_ROOT}/'"
 
 echo
-echo "Loaded ${count} file(s) into HDFS ${HDFS_RAW_ROOT}/"
+echo "Loaded data/raw into HDFS ${HDFS_RAW_ROOT}/"
 echo
 echo "Verify:"
 echo "  docker exec ${NAMENODE_CONTAINER} hdfs dfs -ls -R ${HDFS_RAW_ROOT} | head"
-echo "  open http://localhost:9870  (HDFS UI; mapped from container 50070)"
+echo "  open http://localhost:50070  (HDFS UI)"
 echo
 echo "Row counts / empties / duplicate patient IDs:"
 echo "  python3 jobs/data_check.py --raw data/raw"

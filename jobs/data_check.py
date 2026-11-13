@@ -4,7 +4,7 @@ M1 · Data check script (ISIT312 Alpha Group)
 
 Week 8 task: count rows, find empty fields, find duplicate patient IDs.
 
-Checks local staged partitions under data/raw/ (same files you load to HDFS):
+Checks local staged data under data/raw/ (same files you load to HDFS):
   patients / visits / billing
 
 Usage:
@@ -24,7 +24,8 @@ import pandas as pd
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
-REPORT_DIR = ROOT / "reports"
+# Keep reports under data/ so they are not committed to GitHub (data/ is ignored).
+REPORT_DIR = ROOT / "data"
 
 EXPECTED = {
     "patients": [
@@ -68,10 +69,11 @@ def detect_kind(df: pd.DataFrame, path: Path) -> str:
     cols = {c.lower() for c in df.columns}
     name = path.name.lower()
     parent = path.parent.as_posix().lower()
-    if "visits" in parent or name.startswith("visits") or "visit_id" in cols:
-        return "visits"
+    # bill_id BEFORE visit_id — billing rows also contain visit_id
     if "billing" in parent or name.startswith("billing") or "bill_id" in cols:
         return "billing"
+    if "visits" in parent or name.startswith("visits") or "visit_id" in cols:
+        return "visits"
     if "patients" in parent or name.startswith("patients") or (
         "patient_id" in cols and "first_name" in cols
     ):
@@ -82,7 +84,12 @@ def detect_kind(df: pd.DataFrame, path: Path) -> str:
 
 
 def load_frames(paths: list[Path]) -> dict[str, pd.DataFrame]:
-    buckets: dict[str, list[pd.DataFrame]] = {"patients": [], "visits": [], "billing": [], "unknown": []}
+    buckets: dict[str, list[pd.DataFrame]] = {
+        "patients": [],
+        "visits": [],
+        "billing": [],
+        "unknown": [],
+    }
     for path in paths:
         df = pd.read_csv(path, dtype=str)
         kind = detect_kind(df, path)
@@ -110,6 +117,16 @@ def empty_report(df: pd.DataFrame) -> dict:
     return result
 
 
+def unexpected_empty_payment_dates(df: pd.DataFrame) -> int:
+    """Empty payment_date is OK when payment_status is Unpaid; otherwise count as bad."""
+    if "payment_date" not in df.columns or "payment_status" not in df.columns:
+        return 0
+    empty_date = is_empty(df["payment_date"])
+    status = df["payment_status"].astype(str).str.strip().str.lower()
+    unpaid = status.eq("unpaid")
+    return int((empty_date & ~unpaid).sum())
+
+
 def check_table(kind: str, df: pd.DataFrame) -> dict:
     print(f"\n{'=' * 64}")
     print(f"DATA CHECK · {kind.upper()}  ({len(df):,} rows)")
@@ -119,7 +136,6 @@ def check_table(kind: str, df: pd.DataFrame) -> dict:
     missing_cols = [c for c in expected if c not in df.columns]
     extra_cols = [c for c in df.columns if c not in expected and not c.startswith("__")]
 
-    # 1) row counts
     print("\n1) ROW COUNT")
     print(f"   Total rows: {len(df):,}")
     if "branch_id" in df.columns:
@@ -130,11 +146,13 @@ def check_table(kind: str, df: pd.DataFrame) -> dict:
         date_col = "visit_datetime" if "visit_datetime" in df.columns else "visit_date"
         if date_col in df.columns:
             days = pd.to_datetime(df[date_col], errors="coerce").dt.strftime("%Y-%m-%d")
+            vc = days.value_counts()
             print(f"   Distinct days: {days.nunique()}")
-            print(f"   Visits/day min/mean/max: "
-                  f"{days.value_counts().min()}/{days.value_counts().mean():.1f}/{days.value_counts().max()}")
+            print(
+                f"   Visits/day min/mean/max: "
+                f"{vc.min()}/{vc.mean():.1f}/{vc.max()}"
+            )
 
-    # 2) empty fields
     empties = empty_report(df)
     print("\n2) EMPTY FIELDS")
     if not empties:
@@ -142,9 +160,22 @@ def check_table(kind: str, df: pd.DataFrame) -> dict:
     else:
         print(f"   {'column':<22} {'empty':>8} {'pct':>8}")
         for col, info in sorted(empties.items(), key=lambda x: -x[1]["empty_count"]):
-            print(f"   {col:<22} {info['empty_count']:>8,} {info['empty_pct']:>7.2f}%")
+            note = ""
+            if kind == "billing" and col == "payment_date":
+                note = "  (OK when payment_status=Unpaid)"
+            print(
+                f"   {col:<22} {info['empty_count']:>8,} "
+                f"{info['empty_pct']:>7.2f}%{note}"
+            )
 
-    # 3) duplicate patient IDs (+ primary key dups)
+    bad_payment_dates = unexpected_empty_payment_dates(df) if kind == "billing" else 0
+    if kind == "billing" and "payment_date" in empties:
+        unpaid_empty = empties["payment_date"]["empty_count"] - bad_payment_dates
+        print(
+            f"   payment_date detail: {unpaid_empty:,} empty on Unpaid (OK), "
+            f"{bad_payment_dates:,} empty on non-Unpaid"
+        )
+
     print("\n3) DUPLICATE PATIENT IDs")
     pid_info: dict = {}
     if "patient_id" not in df.columns:
@@ -156,10 +187,17 @@ def check_table(kind: str, df: pd.DataFrame) -> dict:
         dup_mask = df["patient_id"].duplicated(keep=False) & ~is_empty(df["patient_id"])
         dup_ids = df.loc[dup_mask, "patient_id"].value_counts()
 
-        # attribute conflicts for same patient_id (patients table / denormalised attrs)
         conflict_cols = [
             c
-            for c in ("first_name", "last_name", "dob", "gender", "contact_number", "email", "address")
+            for c in (
+                "first_name",
+                "last_name",
+                "dob",
+                "gender",
+                "contact_number",
+                "email",
+                "address",
+            )
             if c in df.columns
         ]
         conflicts = []
@@ -167,22 +205,27 @@ def check_table(kind: str, df: pd.DataFrame) -> dict:
             for pid, g in df.loc[~is_empty(df["patient_id"])].groupby("patient_id"):
                 detail = {}
                 for col in conflict_cols:
-                    vals = sorted({v for v in g[col].tolist() if str(v).strip() not in ("", "nan")})
+                    vals = sorted(
+                        {v for v in g[col].tolist() if str(v).strip() not in ("", "nan")}
+                    )
                     if len(vals) > 1:
                         detail[col] = vals[:5]
                 if detail:
-                    conflicts.append({"patient_id": pid, "rows": int(len(g)), "conflicts": detail})
+                    conflicts.append(
+                        {"patient_id": pid, "rows": int(len(g)), "conflicts": detail}
+                    )
                 if len(conflicts) >= 50:
                     break
 
         print(f"   Unique patient_ids     : {unique_pids:,}")
         print(f"   Empty patient_ids      : {empty_pids:,}")
-        print(f"   Duplicate patient_ids  : {int(dup_ids.shape[0]):,} values "
-              f"({int(dup_mask.sum()):,} rows)")
+        print(
+            f"   Duplicate patient_ids  : {int(dup_ids.shape[0]):,} values "
+            f"({int(dup_mask.sum()):,} rows)"
+        )
         print(f"   Attribute conflicts    : {len(conflicts):,}")
         if kind == "visits":
             print("   Note: repeat patient_id on visits = expected (return visits).")
-            print("         Fail only on empty IDs or conflicting patient attributes.")
         elif kind == "patients":
             print("   Note: on patients table, duplicate patient_id is an ERROR.")
         if not dup_ids.empty and kind == "patients":
@@ -204,7 +247,6 @@ def check_table(kind: str, df: pd.DataFrame) -> dict:
             "top_duplicate_patient_ids": dup_ids.head(20).to_dict(),
         }
 
-    # primary key uniqueness
     pk = PRIMARY_KEY.get(kind)
     pk_dups = 0
     if pk and pk in df.columns:
@@ -213,14 +255,22 @@ def check_table(kind: str, df: pd.DataFrame) -> dict:
         print(f"   Duplicate {pk} values: {pk_dups:,}")
 
     if missing_cols:
-        print(f"\n5) SCHEMA")
+        print("\n5) SCHEMA")
         print(f"   Missing expected columns: {missing_cols}")
     if extra_cols:
         print(f"   Extra columns: {extra_cols}")
 
+    # Empties that should fail — ignore payment_date empties on Unpaid bills
+    failing_empty_cols = {
+        col: info
+        for col, info in empties.items()
+        if not (kind == "billing" and col == "payment_date")
+    }
     fail = []
-    if empties:
-        fail.append(f"{len(empties)} column(s) with empties")
+    if failing_empty_cols:
+        fail.append(f"{len(failing_empty_cols)} column(s) with empties")
+    if bad_payment_dates:
+        fail.append(f"{bad_payment_dates} paid/non-Unpaid bill(s) with empty payment_date")
     if pid_info.get("empty_patient_ids"):
         fail.append("empty patient_id values")
     if kind == "patients" and pid_info.get("duplicate_patient_id_values"):
@@ -245,6 +295,7 @@ def check_table(kind: str, df: pd.DataFrame) -> dict:
         "missing_columns": missing_cols,
         "extra_columns": extra_cols,
         "empty_fields": empties,
+        "unexpected_empty_payment_dates": bad_payment_dates,
         "patient_ids": pid_info,
         "primary_key_duplicates": pk_dups,
         "status": status,
@@ -266,7 +317,6 @@ def gather_paths(raw: Path | None, inputs: list[Path]) -> list[Path]:
     elif raw and raw.exists():
         paths.extend(sorted(raw.rglob("*.csv")))
     else:
-        # fallbacks
         for cand in (
             ROOT / "data" / "raw",
             ROOT / "data" / "incoming",
@@ -275,7 +325,6 @@ def gather_paths(raw: Path | None, inputs: list[Path]) -> list[Path]:
             if cand.exists():
                 paths.extend(sorted(cand.rglob("*.csv")))
                 break
-    # unique
     seen = set()
     out = []
     for p in paths:
@@ -290,7 +339,12 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="M1 data check for Alpha Group lake")
     ap.add_argument("--raw", type=Path, default=ROOT / "data" / "raw")
     ap.add_argument("--input", action="append", type=Path, default=[])
-    ap.add_argument("--report-dir", type=Path, default=REPORT_DIR)
+    ap.add_argument(
+        "--report-dir",
+        type=Path,
+        default=REPORT_DIR,
+        help="Default: data/ (so reports stay out of GitHub)",
+    )
     args = ap.parse_args()
 
     paths = gather_paths(args.raw, args.input)
@@ -301,7 +355,7 @@ def main() -> None:
             "or pass --input path/to/visits.csv"
         )
 
-    print("M1 DATA CHECK — Alpha Group / project312")
+    print("M1 DATA CHECK — Alpha Group")
     print(f"Files: {len(paths)}")
     tables = load_frames(paths)
     if not tables:
