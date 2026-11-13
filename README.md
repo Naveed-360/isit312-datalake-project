@@ -24,7 +24,10 @@ ISIT312 Big Data Management · Presentation Wed 25 Nov 2026
 
 ## Architecture
 
-![Architecture diagram](results/Architecture%20Diagram.png)
+![Architecture diagram](results/Updated%20Architecture%20Diagram%20Simplified.png)
+
+The full version, with every script, folder and table:
+[Updated Architecture Diagram Detailed.png](results/Updated%20Architecture%20Diagram%20Detailed.png)
 
 How data moves through the lake:
 
@@ -48,7 +51,7 @@ How data moves through the lake:
 | **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py` | ✅ Working end to end. Needs `visit_date` → `visit_datetime` in `streaming.py` |
 | **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Upload, Spark job, Hive tables. ⏳ Link files to the final 6-digit patient IDs |
 | **Naveed** | Docker setup, processing, Hive tables, dashboard | `docker-compose.yml`, `jobs/m4/` | ✅ Setup, clean job, Hive tables. ⏳ Power BI dashboard |
-| **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Diagram v1, both jobs. ⏳ Timing test |
+| **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Final diagrams (detailed + simplified), both jobs, benchmark script. ⏳ Timing results |
 
 ---
 
@@ -85,7 +88,10 @@ isit312-datalake-project/
 │       ├── prepare_benchmark_data.py      ← Shahir: makes 10k / 100k / 300k patient files
 │       └── run_hadoop_spark_benchmark.ps1 ← Shahir: times MapReduce vs Spark on each size
 ├── results/
-│   └── Architecture Diagram.png     ← Shahir: architecture diagram
+│   ├── Updated Architecture Diagram Simplified.png     ← Shahir: diagram for slides (shown above)
+│   ├── Updated Architecture Diagram Simplified.drawio  ← Shahir: editable version (draw.io)
+│   ├── Updated Architecture Diagram Detailed.png       ← Shahir: full diagram for the report
+│   └── Updated Architecture Diagram Detailed.drawio    ← Shahir: editable version (draw.io)
 └── data/                     ← your local data files; appears as /data (not on GitHub)
 ```
 
