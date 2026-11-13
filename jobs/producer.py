@@ -4,7 +4,14 @@ import time
 import random
 import os
 from kafka import KafkaProducer
-from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+from datetime import datetime, timezone, timedelta
+
+# Saudi Arabia Standard Time (UTC+3)
+try:
+    SAUDI_TZ = ZoneInfo('Asia/Riyadh')
+except Exception:
+    SAUDI_TZ = timezone(timedelta(hours=3))
 
 # Connect to Kafka (running on localhost from outside Docker)
 producer = KafkaProducer(
@@ -21,7 +28,7 @@ diagnoses = sample_df['diagnosis'].dropna().unique().tolist()
 branches = [1, 2, 3]
 
 # State file to persist the next visit number across runs
-STATE_FILE = './jobs/.producer_state.json'
+STATE_FILE = './data/.producer_state.json'
 DEFAULT_START_VISIT_NUM = 324807
 
 def get_next_visit_num():
@@ -51,7 +58,7 @@ try:
             "visit_id": f"V{curr_id_num}",
             "patient_id": random.choice(existing_patient_ids),
             "branch_id": int(random.choice(branches)),
-            "visit_datetime": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            "visit_datetime": datetime.now(SAUDI_TZ).strftime("%Y-%m-%d %H:%M:%S"),
             "doctor_id": random.choice(doctor_ids),
             "diagnosis": random.choice(diagnoses),
             "sent_timestamp": time.time()
