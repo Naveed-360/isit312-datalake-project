@@ -1,0 +1,4 @@
+﻿rows,mapreduce_median_ms,spark_median_ms,mapreduce_runs_ms,spark_runs_ms,spark_master,branch_counts,output_check
+10000,3655,21070,3692 3566 3655,19465 21254 21070,spark://spark-master:7077,1=3316 2=3399 3=3285,PASS
+100000,4650,21024,4650 4640 4692,20755 21515 21024,spark://spark-master:7077,1=33082 2=33532 3=33386,PASS
+300000,5566,21226,5740 5556 5566,20954 21675 21226,spark://spark-master:7077,1=99893 2=100366 3=99741,PASS
