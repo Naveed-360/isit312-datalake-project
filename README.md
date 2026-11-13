@@ -45,11 +45,11 @@ How data moves through the lake:
 
 ## Team and modules
 
-| Member | Module | Code | Status (10 Nov) |
+| Member | Module | Code | Status (13 Nov) |
 |---|---|---|---|
-| **Afrith** | Batch ingestion: synthetic patients, visits, billing | (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026) |
-| **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py` | ✅ Working end to end. Needs `visit_date` → `visit_datetime` in `streaming.py` |
-| **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Upload, Spark job, Hive tables. ⏳ Link files to the final 6-digit patient IDs |
+| **Afrith** | Batch ingestion: synthetic patients, visits, billing | `jobs/load_raw_to_hdfs.sh`, `jobs/data_check.py` (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026). ⏳ Load and data check scripts being fixed. Use step 1 below to load for now |
+| **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py`, `jobs/create_visits_live_table.sql` | ✅ Done: new visits in Saudi time, unique visit IDs across runs, Hive table, delay 0.50 s over 100 visits |
+| **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Done: 350 files for 200 patients, linked to the final 6-digit patient IDs; upload, Spark job, Hive tables, demo |
 | **Naveed** | Docker setup, processing, Hive tables, dashboard | `docker-compose.yml`, `jobs/m4/` | ✅ Setup, clean job, Hive tables. ⏳ Power BI dashboard |
 | **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Final diagrams (detailed + simplified), both jobs, benchmark script. ⏳ Timing results |
 
@@ -70,10 +70,14 @@ isit312-datalake-project/
 │   └── hive-site.xml         ← tells Spark where the Hive tables are
 ├── jobs/                     ← all code; appears as /jobs inside the containers
 │   ├── example_job.py        ← starter Spark job: visits per branch
-│   ├── producer.py           ← Wafeeq: sends visits to Kafka, one per second
+│   ├── load_raw_to_hdfs.sh   ← Afrith: loads data/raw/ into HDFS /raw (being fixed)
+│   ├── data_check.py         ← Afrith: row counts, empty fields, duplicate IDs (being fixed)
+│   ├── producer.py           ← Wafeeq: sends 100 new live visits to Kafka
 │   ├── streaming.py          ← Wafeeq: Kafka → /curated/visits_live (Spark Streaming)
+│   ├── create_visits_live_table.sql ← Wafeeq: Hive table alpha.visits_live
 │   ├── measure_delay.py      ← Wafeeq: average send → save delay
 │   ├── m3/
+│   │   ├── generate_medical_files.py ← Fawaz: makes the dummy scans, reports, documents + metadata.csv
 │   │   ├── file_upload.py           ← Fawaz: uploads scans, reports and metadata.csv to HDFS
 │   │   ├── scan_table.py            ← Fawaz: metadata → /curated/medical_files, scans, reports
 │   │   ├── m3_table_creation.sql    ← Fawaz: Hive tables alpha.medical_files, alpha.scans, alpha.reports
@@ -135,8 +139,15 @@ script, Hive quietly leaves out any new branch and gives no error.
 
 ### 3. Medical files (Fawaz)
 
-Put Fawaz's files and `metadata.csv` in `data/m3/` (ask Fawaz for the folder), then
-upload them, build the table data and create the Hive tables:
+First make the dummy files. This needs Afrith's `patients.csv` in `data/m1/` and, once,
+`pip install pillow reportlab`. From the project folder:
+
+```bash
+python jobs/m3/generate_medical_files.py
+```
+
+✅ It writes 350 files (200 scans, 100 lab reports, 50 documents) and `metadata.csv` to `data/m3/`,
+and ends with `Missing files: 0`. Then upload them, build the table data and create the Hive tables:
 
 ```bash
 docker exec namenode python3 /jobs/m3/file_upload.py
@@ -167,17 +178,27 @@ Terminal 1, start the streaming job (it keeps running):
 docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7077 --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 /jobs/streaming.py
 ```
 
-Terminal 2, from the project folder, send visits (one per second, stop with Ctrl+C):
+Terminal 2, from the project folder, send live visits. It needs Afrith's `visits.csv` in `data/m1/`:
 
 ```bash
 python jobs/producer.py
 ```
 
-Then stop the streaming job (Ctrl+C in terminal 1) and measure the delay:
+✅ It sends 100 **new** visits in about 20 seconds, stamped with Saudi time. Visit IDs carry on
+from `V324807` and never repeat between runs (the last ID used is kept in `data/.producer_state.json`).
+
+Then stop the streaming job (Ctrl+C in terminal 1), create the Hive table and measure the delay:
+
+```bash
+docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/create_visits_live_table.sql
+```
 
 ```bash
 docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7077 /jobs/measure_delay.py
 ```
+
+To start again from scratch, clear the old output first:
+`docker exec namenode hdfs dfs -rm -r -skipTrash /curated/visits_live /checkpoints/visits_live`
 
 ### 5. MapReduce vs Spark (Shahir)
 
