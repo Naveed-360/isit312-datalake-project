@@ -50,7 +50,7 @@ How data moves through the lake:
 | **Afrith** | Batch ingestion: synthetic patients, visits, billing | `jobs/load_raw_to_hdfs.sh`, `jobs/data_check.py` (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026). ✅ Data check passes on all 3 files. ✅ Load script works for the split layout. ⏳ `prepare_raw_partitions.py` (makes `data/raw/`) not on GitHub yet |
 | **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py`, `jobs/create_visits_live_table.sql` | ✅ Done: new visits in Saudi time, unique visit IDs across runs, Hive table, delay 0.50 s over 100 visits |
 | **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Done: 350 files for 200 patients, linked to the final 6-digit patient IDs; upload, Spark job, Hive tables, demo |
-| **Naveed** | Docker setup, processing, Hive tables, dashboard | `docker-compose.yml`, `jobs/m4/` | ✅ Setup, clean job, Hive tables. ⏳ Power BI dashboard |
+| **Naveed** | Docker setup, processing, Hive tables, dashboard | `docker-compose.yml`, `jobs/m4/` | ✅ Done: setup, clean job, Hive tables, 4 dashboard queries, Power BI dashboard (`results/dashboard/`) |
 | **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Done: final diagrams (detailed + simplified), both jobs, timing test on 10k / 100k / 300k (all PASS, `results/mapreduce_vs_spark.csv`) |
 
 ---
@@ -84,7 +84,8 @@ isit312-datalake-project/
 │   │   └── demo_patient_files.sql   ← Fawaz: every file for one patient, across all branches
 │   ├── m4/
 │   │   ├── clean_batch.py    ← Naveed: /raw → /curated (clean, de-duplicate, join)
-│   │   └── create_tables.sql ← Naveed: Hive tables alpha.patients, alpha.visits_billing
+│   │   ├── create_tables.sql ← Naveed: Hive tables alpha.patients, alpha.visits_billing
+│   │   └── dashboard_queries.sql ← Naveed: the 4 dashboard queries (Hive SQL)
 │   └── m5/
 │       ├── branch_count_mapper.py   ← Shahir: MapReduce mapper (Hadoop Streaming)
 │       ├── branch_count_reducer.py  ← Shahir: MapReduce reducer
@@ -96,7 +97,10 @@ isit312-datalake-project/
 │   ├── Updated Architecture Diagram Simplified.drawio  ← Shahir: editable version (draw.io)
 │   ├── Updated Architecture Diagram Detailed.png       ← Shahir: full diagram for the report
 │   ├── Updated Architecture Diagram Detailed.drawio    ← Shahir: editable version (draw.io)
-│   └── mapreduce_vs_spark.csv                          ← Shahir: timing results (median of 3 runs per size)
+│   ├── mapreduce_vs_spark.csv                          ← Shahir: timing results (median of 3 runs per size)
+│   └── dashboard/
+│       ├── isit312_project_dashboard.pbix  ← Naveed: Power BI dashboard (open in Power BI Desktop)
+│       └── isit312_project_dashboard.pdf   ← Naveed: the same dashboard as a PDF, for anyone without Power BI
 └── data/                     ← your local data files; appears as /data (not on GitHub)
 ```
 
@@ -254,8 +258,36 @@ Spark in one process instead of on the Spark cluster.
 
 ### 6. Dashboard (Naveed)
 
-Power BI Desktop connects to Hive at `localhost:10000` (ODBC) and reads the `alpha` tables.
-Coming by Fri 13 Nov.
+The clinic managers' dashboard is in `results/dashboard/`. Open the `.pbix` in Power BI Desktop
+(Windows), or the `.pdf` anywhere. It shows patients per branch, monthly revenue per branch,
+repeat visits and busiest hours, from the 4 queries in [`jobs/m4/dashboard_queries.sql`](jobs/m4/dashboard_queries.sql).
+
+Run the 4 queries in Hive directly (after step 2):
+
+```bash
+docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/m4/dashboard_queries.sql
+```
+
+**To refresh the dashboard from Hive** (only needed if the data changes; the `.pbix` keeps a copy):
+
+1. Install the free **Cloudera ODBC Driver for Apache Hive**, 64-bit
+   (https://www.cloudera.com/downloads/connectors/hive/odbc.html, free account needed).
+2. Start menu → **ODBC Data Sources (64-bit)** → System DSN → Add → Cloudera ODBC Driver for Apache Hive:
+
+   | Setting | Value |
+   |---|---|
+   | Data Source Name | `AlphaHive` |
+   | Hive Server Type | Hive Server 2 |
+   | Host / Port / Database | `localhost` / `10000` / `alpha` |
+   | Mechanism | User Name, user `hive`, no password |
+   | Thrift Transport | **SASL** |
+   | SSL Options | **Enable SSL unticked** |
+
+   **Test** should say `SUCCESS`. Docker must be running.
+3. In Power BI: **File → Options → Data Load**, untick **"Enable parallel loading of tables"** (current file)
+   and **"Allow data preview to download in the background"** (global). Hive runs each query in its own
+   process with little memory, so parallel queries fail with `return code 2` (`OutOfMemoryError` in the Hive log).
+4. **Home → Refresh**.
 
 ---
 
