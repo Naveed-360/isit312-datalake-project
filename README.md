@@ -47,7 +47,7 @@ How data moves through the lake:
 
 | Member | Module | Code | Status (13 Nov) |
 |---|---|---|---|
-| **Afrith** | Batch ingestion: synthetic patients, visits, billing | `jobs/load_raw_to_hdfs.sh`, `jobs/data_check.py` (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026). ✅ Data check passes on all 3 files. ✅ Load script works for the split layout. ⏳ `prepare_raw_partitions.py` (makes `data/raw/`) not on GitHub yet |
+| **Afrith** | Batch ingestion: synthetic patients, visits, billing | `jobs/prepare_raw_partitions.py`, `jobs/load_raw_to_hdfs.sh`, `jobs/data_check.py` (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026). ✅ Done: data check passes on all 3 files; split layout prepared and loaded by script |
 | **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py`, `jobs/create_visits_live_table.sql` | ✅ Done: new visits in Saudi time, unique visit IDs across runs, Hive table, delay 0.50 s over 100 visits |
 | **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Done: 350 files for 200 patients, linked to the final 6-digit patient IDs; upload, Spark job, Hive tables, demo |
 | **Naveed** | Docker setup, processing, Hive tables, dashboard | `docker-compose.yml`, `jobs/m4/` | ✅ Done: setup, clean job, Hive tables, 4 dashboard queries, Power BI dashboard (`results/dashboard/`) |
@@ -70,7 +70,8 @@ isit312-datalake-project/
 │   └── hive-site.xml         ← tells Spark where the Hive tables are
 ├── jobs/                     ← all code; appears as /jobs inside the containers
 │   ├── example_job.py        ← starter Spark job: visits per branch
-│   ├── load_raw_to_hdfs.sh   ← Afrith: loads data/raw/ (visits + billing split by branch and day) into HDFS /raw
+│   ├── prepare_raw_partitions.py ← Afrith: splits data/m1/ into data/raw/ (visits + billing by branch and day)
+│   ├── load_raw_to_hdfs.sh   ← Afrith: loads data/raw/ into HDFS /raw
 │   ├── data_check.py         ← Afrith: row counts, empty fields, duplicate IDs
 │   ├── producer.py           ← Wafeeq: sends 100 new live visits to Kafka
 │   ├── streaming.py          ← Wafeeq: Kafka → /curated/visits_live (Spark Streaming)
@@ -132,7 +133,14 @@ python jobs/data_check.py --input data/m1
 `payment_date` on Unpaid bills is expected. The report is saved in `data/`.
 
 **Alternative: Afrith's split layout** (visits and billing in one folder per branch and day, as a
-real clinic would deliver them). Once `data/raw/` exists, run from **Git Bash**:
+real clinic would deliver them). First split the 3 files into `data/raw/` (about 10 seconds):
+
+```bash
+python jobs/prepare_raw_partitions.py --incoming data/m1
+```
+
+✅ It ends with `Done. 2696 file(s)`: one `patients.csv`, visits by visit date, and billing by
+payment date (Unpaid bills go in `date=unknown`). Then load them, from **Git Bash**:
 
 ```bash
 bash jobs/load_raw_to_hdfs.sh --fresh
