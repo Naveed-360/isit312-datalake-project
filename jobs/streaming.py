@@ -8,6 +8,9 @@ spark = SparkSession.builder \
     .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0") \
     .getOrCreate()
 
+# Suppress repetitive INFO logs from Spark, Kafka consumer, and SubscriptionState
+spark.sparkContext.setLogLevel("WARN")
+
 # Define the schema to match your visits.csv columns + the sent_timestamp you added
 schema = StructType() \
     .add("visit_id", StringType()) \
