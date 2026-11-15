@@ -12,7 +12,7 @@ import subprocess
 import sys
 from collections import defaultdict
 
-ROOT = os.environ.get("M3_ROOT", "/data/m3")
+ROOT = os.environ.get("M3_ROOT", "./data/m3")
 META = os.path.join(ROOT, "metadata.csv")
 HDFS_FILES = "/raw/medical_files"
 HDFS_META = "/raw/files_metadata"

@@ -234,7 +234,7 @@ docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7
 To start again from scratch, clear the old output first:
 `docker exec namenode hdfs dfs -rm -r -skipTrash /curated/visits_live /checkpoints/visits_live`
 
-### 5. MapReduce vs Spark (Shahir)
+### 5.   (Shahir)
 
 ```bash
 docker exec namenode hadoop jar /opt/hadoop-2.7.4/share/hadoop/tools/lib/hadoop-streaming-2.7.4.jar -files /jobs/m5/branch_count_mapper.py,/jobs/m5/branch_count_reducer.py -mapper "python3 branch_count_mapper.py" -reducer "python3 branch_count_reducer.py" -input /raw/patients -output /results/branch_count
