@@ -15,6 +15,7 @@ and makes it queryable. We built a working version that runs on any laptop with 
 - **Kafka** carries new visits as they happen
 - **Hive** lets anyone query the data with SQL
 - **Power BI** shows the dashboard the clinic's managers would use
+- **Airflow** runs the batch pipeline every night on a schedule
 
 > **New to the project?** Start with **[SETUP.md](SETUP.md)** to get Docker running on your laptop.
 
@@ -33,6 +34,7 @@ How data moves through the lake:
 
 ```text
  Afrith's CSV files ──► /raw ──(Naveed's clean job)──► /curated ──► Hive tables (alpha.*) ──► Power BI dashboard
+   └── run every night at 2am by Airflow (airflow/dags/alpha_batch_pipeline.py)
 
  Afrith's visits ──(Wafeeq's producer)──► Kafka "new-visits" ──(Wafeeq's Spark Streaming)──► /curated/visits_live
 
@@ -50,7 +52,7 @@ How data moves through the lake:
 | **Afrith** | Batch ingestion: synthetic patients, visits, billing | `jobs/prepare_raw_partitions.py`, `jobs/load_raw_to_hdfs.sh`, `jobs/data_check.py` (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026). ✅ Done: data check passes on all 3 files; split layout prepared and loaded by script |
 | **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py`, `jobs/create_visits_live_table.sql` | ✅ Done: new visits in Saudi time, unique visit IDs across runs, Hive table, delay 0.50 s over 100 visits |
 | **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Done: 350 files for 200 patients, linked to the final 6-digit patient IDs; upload, Spark job, Hive tables, demo |
-| **Naveed** | Docker setup, processing, Hive tables, dashboard | `docker-compose.yml`, `jobs/m4/` | ✅ Done: setup, clean job, Hive tables, 4 dashboard queries, Power BI dashboard (`results/dashboard/`) |
+| **Naveed** | Docker setup, processing, Hive tables, dashboard, scheduler | `docker-compose.yml`, `jobs/m4/`, `airflow/` | ✅ Done: setup, clean job, Hive tables, 4 dashboard queries, Power BI dashboard (`results/dashboard/`), Airflow pipeline (18 Nov) |
 | **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Done: final diagrams (detailed + simplified), both jobs, timing test on 10k / 100k / 300k (all PASS, `results/mapreduce_vs_spark.csv`) |
 
 ---
@@ -61,7 +63,10 @@ How data moves through the lake:
 isit312-datalake-project/
 ├── README.md                 ← you are here: what the project is and how to run it
 ├── SETUP.md                  ← install Docker and start the setup (do this first)
-├── docker-compose.yml        ← the 8 containers: HDFS, Hive, Spark, Kafka
+├── docker-compose.yml        ← the 8 containers: HDFS, Hive, Spark, Kafka (+ optional Airflow)
+├── airflow/
+│   └── dags/
+│       └── alpha_batch_pipeline.py ← Naveed: the nightly batch pipeline (Airflow DAG)
 ├── hadoop.env                ← shared Hadoop settings for the containers
 ├── hadoop/
 │   └── Dockerfile            ← adds Python to the Hadoop container (for MapReduce)
@@ -110,6 +115,8 @@ isit312-datalake-project/
 ## Running the pipeline
 
 Do these in order. Your setup must be running ([SETUP.md](SETUP.md)).
+
+> Steps 1 and 2 (the batch part) can also run on their own every night with **Airflow**, see [step 7](#7-schedule-the-batch-pipeline-with-airflow-naveed).
 
 ### 1. Load Afrith's data into HDFS
 
@@ -296,6 +303,55 @@ docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -f /jobs/m4/dash
    and **"Allow data preview to download in the background"** (global). Hive runs each query in its own
    process with little memory, so parallel queries fail with `return code 2` (`OutOfMemoryError` in the Hive log).
 4. **Home → Refresh**.
+
+### 7. Schedule the batch pipeline with Airflow (Naveed)
+
+**Airflow** is the job scheduler. It runs the whole batch part (steps 1 and 2) every night at 2am,
+in order, and stops if a step fails. The pipeline is one Python file,
+[`airflow/dags/alpha_batch_pipeline.py`](airflow/dags/alpha_batch_pipeline.py) (a "DAG"):
+
+```text
+skip_late_runs ─► prepare_raw ─► data_check ─► data_check_gate ─► load_raw_to_hdfs ─► spark_clean ─► hive_tables ─► check_counts
+                  data/m1 split   Afrith's      stops the run if    full reload of      Naveed's        create_tables  visits and
+                  by branch+day   data check    a table FAILS       /raw (in parallel)  clean job       .sql           revenue per branch
+```
+
+Airflow is **not started** by `docker compose up -d` (it needs about 1.4 GB of memory). Start it on its own:
+
+```bash
+docker compose --profile airflow up -d airflow
+```
+
+1. Wait about 1 minute, then open **http://localhost:8090** and log in with `admin` / `admin` (local only).
+2. Click **alpha_batch_pipeline**, then the **▶ (Trigger DAG)** button at the top right. This also switches the DAG on.
+3. Open the **Graph** tab: each box turns green as its step finishes. Click a box → **Logs** to see its output,
+   e.g. the PASS lines from the data check or the row counts from the clean job.
+
+✅ Check: all 8 boxes green after **4 to 5 minutes** on the full data (tested 3 times on 18 Nov 2026):
+
+| Step | Time |
+|---|---|
+| prepare_raw | 45 s |
+| data_check + gate | 1 min 25 s |
+| load_raw_to_hdfs (about 2,700 files) | 40 s to 1 min 40 s |
+| spark_clean | 54 s |
+| hive_tables + check_counts | 15 s |
+
+`check_counts` shows 108,481 / 108,279 / 108,046 visits for branches 1 / 2 / 3.
+
+Good to know:
+
+- **The scheduled run** is at 2am UTC every night once the DAG is switched on (the toggle next to its name).
+  If the laptop was off at 2am, Airflow tries to catch up as soon as it starts; `skip_late_runs` skips that
+  late run (it shows pink, "skipped"), so you never get two runs in a row. The ▶ button always runs.
+- **How it reaches our containers:** the Airflow container has the Docker socket mounted and runs each step
+  with `docker exec` in `namenode`, `spark-master` or `hive-server`, exactly like the commands in steps 1 and 2.
+  The first two steps run inside the Airflow container itself (it has Python and pandas).
+- **Streaming uses all Spark cores.** If Wafeeq's streaming job is running, `spark_clean` waits for it.
+  Run the pipeline before starting the stream, or stop the stream first.
+- **Load is a full reload:** `/raw/patients`, `/raw/visits` and `/raw/billing` are deleted and loaded again.
+  The medical files in `/raw/medical_files` are not touched.
+- **To stop Airflow:** `docker compose stop airflow`. Its run history is kept until the container is removed.
 
 ---
 

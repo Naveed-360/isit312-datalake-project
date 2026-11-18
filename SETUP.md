@@ -130,6 +130,7 @@ appear as `/data` and `/jobs`. The `data/` folder is never uploaded to GitHub.
 | Spark jobs | http://localhost:8080 |
 | Hive (from inside Docker, or Power BI / DBeaver on your laptop) | `jdbc:hive2://localhost:10000` |
 | Kafka from your laptop (e.g. a Python script) | `localhost:29092` |
+| Airflow scheduler (optional, start with `docker compose --profile airflow up -d airflow`) | http://localhost:8090 (admin / admin) |
 | Kafka from a Spark job inside Docker | `kafka:9092` |
 
 ---

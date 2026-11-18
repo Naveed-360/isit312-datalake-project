@@ -103,6 +103,34 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
 
+  # ---------- Airflow (job scheduler, optional) ----------
+  # Runs the nightly batch pipeline in airflow/dags/alpha_batch_pipeline.py.
+  # Not started by a plain "docker compose up -d". Start it with:
+  #   docker compose --profile airflow up -d airflow
+  # Web UI: http://localhost:8090  (login admin / admin, local demo only)
+  # One container (airflow standalone, SQLite) to keep memory low, about 1 GB.
+  airflow:
+    image: apache/airflow:2.10.5
+    container_name: airflow
+    profiles: ["airflow"]
+    command: standalone
+    user: "0:0"        # needs root to use the Docker socket on Docker Desktop
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "false"
+      _AIRFLOW_DB_MIGRATE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    ports:
+      - "8090:8080"     # Airflow web UI (8080 is Spark's)
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./jobs:/project/jobs
+      - ./data:/project/data
+      - /var/run/docker.sock:/var/run/docker.sock   # lets the DAG run "docker exec" on our containers
+
 volumes:
   namenode:
   datanode:
