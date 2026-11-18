@@ -27,6 +27,8 @@ ISIT312 Big Data Management · Presentation Wed 25 Nov 2026
 
 ![Architecture diagram](results/Updated%20Architecture%20Diagram%20Simplified.png)
 
+Both diagrams were updated on 19 Nov to show Airflow, the nightly batch scheduler.
+
 The full version, with every script, folder and table:
 [Updated Architecture Diagram Detailed.png](results/Updated%20Architecture%20Diagram%20Detailed.png)
 
@@ -47,13 +49,13 @@ How data moves through the lake:
 
 ## Team and modules
 
-| Member | Module | Code | Status (13 Nov) |
+| Member | Module | Code | Status (19 Nov) |
 |---|---|---|---|
 | **Afrith** | Batch ingestion: synthetic patients, visits, billing | `jobs/prepare_raw_partitions.py`, `jobs/load_raw_to_hdfs.sh`, `jobs/data_check.py` (CSV files in the shared Google Drive) | ✅ Full dataset done: 300k patients, 325k visits, 325k bills (Aug 2025 – Oct 2026). ✅ Done: data check passes on all 3 files; split layout prepared and loaded by script |
 | **Wafeeq** | Streaming ingestion: live visits through Kafka | `jobs/producer.py`, `jobs/streaming.py`, `jobs/measure_delay.py`, `jobs/create_visits_live_table.sql` | ✅ Done: new visits in Saudi time, unique visit IDs across runs, Hive table, delay 0.50 s over 100 visits |
 | **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Done: 350 files for 200 patients, linked to the final 6-digit patient IDs; upload, Spark job, Hive tables, demo |
 | **Naveed** | Docker setup, processing, Hive tables, dashboard, scheduler | `docker-compose.yml`, `jobs/m4/`, `airflow/` | ✅ Done: setup, clean job, Hive tables, 4 dashboard queries, Power BI dashboard (`results/dashboard/`), Airflow pipeline (18 Nov) |
-| **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Done: final diagrams (detailed + simplified), both jobs, timing test on 10k / 100k / 300k (all PASS, `results/mapreduce_vs_spark.csv`) |
+| **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Done: final diagrams (detailed + simplified, updated 19 Nov with Airflow), both jobs, timing test on 10k / 100k / 300k (all PASS, `results/mapreduce_vs_spark.csv`) |
 
 ---
 
