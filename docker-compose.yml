@@ -113,8 +113,10 @@ services:
     image: apache/airflow:2.10.5
     container_name: airflow
     profiles: ["airflow"]
-    command: standalone
-    user: "0:0"        # needs root to use the Docker socket on Docker Desktop
+    # Delete the web server's pid file first: after a restart the old one is left
+    # behind and the web page refuses to start ("Already running on PID ...").
+    command: bash -c "rm -f /opt/airflow/airflow-webserver*.pid && exec airflow standalone"
+    user: "0:0"       # needs root to use the Docker socket on Docker Desktop
     environment:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
