@@ -56,6 +56,7 @@ How data moves through the lake:
 | **Fawaz** | Medical files: dummy scans, lab reports, documents | `jobs/m3/` | ✅ Done: 350 files for 200 patients, linked to the final 6-digit patient IDs; upload, Spark job, Hive tables, demo |
 | **Naveed** | Docker setup, processing, Hive tables, dashboard, scheduler | `docker-compose.yml`, `jobs/m4/`, `airflow/` | ✅ Done: setup, clean job, Hive tables, 4 dashboard queries, Power BI dashboard (`results/dashboard/`), Airflow pipeline (18 Nov) |
 | **Shahir** | Architecture diagram, MapReduce vs Spark test | `jobs/m5/`, `results/` | ✅ Done: final diagrams (detailed + simplified, updated 19 Nov with Airflow), both jobs, timing test on 10k / 100k / 300k (all PASS, `results/mapreduce_vs_spark.csv`) |
+| **Sherwin** | Documentation and presentation | Report sections, slides, demo talk | ✅ Done: scheduling and limitations slides, lessons learned, demo narration |
 
 ---
 
@@ -66,6 +67,7 @@ isit312-datalake-project/
 ├── README.md                 ← you are here: what the project is and how to run it
 ├── SETUP.md                  ← install Docker and start the setup (do this first)
 ├── docker-compose.yml        ← the 8 containers: HDFS, Hive, Spark, Kafka (+ optional Airflow)
+├── demo/                     ← short scripts for the class demo (prepare_demo.ps1 starts everything)
 ├── airflow/
 │   └── dags/
 │       └── alpha_batch_pipeline.py ← Naveed: the nightly batch pipeline (Airflow DAG)
@@ -243,7 +245,7 @@ docker exec spark-master /spark/bin/spark-submit --master spark://spark-master:7
 To start again from scratch, clear the old output first:
 `docker exec namenode hdfs dfs -rm -r -skipTrash /curated/visits_live /checkpoints/visits_live`
 
-### 5.   (Shahir)
+### 5. MapReduce vs Spark (Shahir)
 
 ```bash
 docker exec namenode hadoop jar /opt/hadoop-2.7.4/share/hadoop/tools/lib/hadoop-streaming-2.7.4.jar -files /jobs/m5/branch_count_mapper.py,/jobs/m5/branch_count_reducer.py -mapper "python3 branch_count_mapper.py" -reducer "python3 branch_count_reducer.py" -input /raw/patients -output /results/branch_count
