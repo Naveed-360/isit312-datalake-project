@@ -27,7 +27,7 @@ You need two programs:
 The setup runs 8 programs at once, so Docker needs more memory than its default.
 
 1. Open Docker Desktop.
-2. Click the ⚙️ **Settings** icon (top right).
+2. Click the **Settings** icon (top right).
 3. Go to **Resources**.
 4. Set **Memory** to **8 GB** (or more), then click **Apply & restart**.
 
@@ -77,14 +77,14 @@ Run these checks one at a time. Each one tests a different part.
 docker compose ps
 ```
 
-✅ You should see 8 rows, and each one says **Up** or **running**:
+Check: You should see 8 rows, and each one says **Up** or **running**:
 `namenode, datanode, hive-metastore, hive-metastore-postgresql, hive-server, spark-master, spark-worker, kafka`
 
 **b) HDFS (storage)** – open http://localhost:50070 in your browser.
-✅ You see the Hadoop overview page.
+Check: You see the Hadoop overview page.
 
 **c) Spark (processing)** – open http://localhost:8080 in your browser.
-✅ You see the Spark Master page with **1 worker** listed.
+Check: You see the Spark Master page with **1 worker** listed.
 
 **d) Hive (SQL tables)**
 
@@ -92,7 +92,7 @@ docker compose ps
 docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -e "show databases;"
 ```
 
-✅ You see a small table that includes `default`. Ignore any lines starting with `SLF4J`.
+Check: You see a small table that includes `default`. Ignore any lines starting with `SLF4J`.
 
 **e) Kafka (live data)**
 
@@ -100,7 +100,7 @@ docker exec hive-server beeline -u jdbc:hive2://localhost:10000 -e "show databas
 docker exec kafka /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --list
 ```
 
-✅ It finishes without an error. (It may print nothing yet, which is fine.)
+Check: It finishes without an error. (It may print nothing yet, which is fine.)
 
 **All 5 passed? You're done.** Next, load Afrith's data: see
 [Running the pipeline](README.md#running-the-pipeline) in the README.
